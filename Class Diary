@@ -1,0 +1,128 @@
+    'courses':[]
+    } 
+    diary[name]=student
+    
+def add_st_cr(name, c_name, att=0):
+    course= {
+        'c_name':c_name,
+        'attendence':att,
+        'grades': []
+        }  
+    diary[name]['courses'].append(course)
+
+def all_st_info():
+    logging.info('students:')
+    for st_name, st_info in diary.items():
+        for b,c in st_info.items():
+            if b =='courses':
+                logging.info('courses:')
+                for course in c:
+                    logging.info(f"  {course['c_name']}:\n \tattendence: {course['attendence']}\n \tgrades: {course['grades']}")
+            else:
+                print(b,":", c)
+        logging.info("\n") 
+        
+def add_attend(name, c_name, att=1):
+    for course in diary[name]['courses']:
+        if course['c_name'] == c_name:
+            course['attendence']+=att
+            
+def add_grades(name, c_name, grade):
+    for course in diary[name]['courses']:
+        if course['c_name'] == c_name:
+            if isinstance(grade, list):
+                course['grades'].extend(grade)
+            else:
+                course['grades'].append(grade)
+    
+def average(name, c_name='all', all_st=''):
+    gr_sum=0
+    gr_count=0
+    if all_st=='all':
+        for student in diary.values():
+            for course in student['courses']:
+                if course['c_name'] == c_name:
+                    gr_sum+=sum(course['grades'])
+                    gr_count+=len(course['grades'])
+        tot_av=gr_sum/gr_count
+        logging.info(f"Total average in {c_name} is {round(tot_av,2)}") 
+    elif c_name=='all':
+        for course in diary[name]['courses']:
+            gr_sum+=sum(course['grades'])
+            gr_count+=len(course['grades'])
+        tot_av=gr_sum/gr_count
+        logging.info(f"{name}'s total average is {round(tot_av,2)}")  
+    else:
+        for course in diary[name]['courses']:
+            if course['c_name'] == c_name:
+                gr_aver=sum(course['grades'])/len(course['grades'])
+                logging.info(f"{name}'s average in {c_name} : {round(gr_aver,2)}")
+    
+def total_att(name,all_st=''):
+    tot_att=0
+    if all_st=='all':
+        for student in diary.values():
+            for course in student['courses']:
+                if course['c_name'] == name:
+                    tot_att+=course['attendence']
+        logging.info(f"Total attendence in {name} is {tot_att}") 
+    else:
+        for course in diary[name]['courses']:
+            tot_att+=course['attendence']
+        logging.info(f"{name}'s total attendence is {tot_att}")
+        
+def save_student_info():
+    with open('all_students.txt','w') as file:
+        for st_name, st_info in diary.items():
+            for b,c in st_info.items():
+                if b =='courses':
+                    file.write(f"Student: {st_name}\n")
+                    for course in c:
+                        file.write(f"     course: {course['c_name']}\n")
+                        file.write(f"        attendence: {course['attendence']}\n")
+                        file.write(f"        grades: {course['grades']}\n")   
+            file.write("\n")
+
+if __name__=='__main__':
+    add_st('mark', 4, 'a')
+    add_st('anna', 4, 'b')
+    
+    add_st_cr('mark', 'math')
+    add_st_cr('anna', 'biology')
+    add_st_cr('mark', 'biology')
+    add_attend('anna', 'biology')
+    add_attend('mark', 'math')
+    
+    add_grades('anna', 'biology', 2)
+    add_grades('mark', 'biology', [1,2,5])
+    add_attend('mark', 'biology', 3)
+    all_st_info()
+    total_att('mark')
+    add_grades('mark', 'math', [3,4])
+    average('mark')
+    average('mark', 'biology') 
+    total_att('mark')       
+    average('','biology', 'all')
+    total_att('biology', 'all')
+    names=['carl', 'john', 'kate', 'james','mary', 'linda', 'susan','richard','matthew','sarah','william', 'amy']
+    years=[1,2,3,4]
+    classes=['a','b','c']
+    for i in range(12):
+        r_name=random.choice(names)
+        add_st(r_name, random.choice(years), random.choice(classes))
+        names.remove(r_name)  
+    courses=['biology', 'math', 'english', 'geography']
+    names=['carl', 'john', 'kate', 'james','mary', 'linda', 'susan','richard','matthew','sarah','william', 'amy']
+    for j in courses:
+        for i in names:
+            add_st_cr(i, j)
+            add_attend(i, j, random.choice(range(0,10)))
+            add_grades(i, j, random.sample(range(1,6),3))
+    all_st_info() 
+    average('susan')
+    average('susan', 'biology') 
+    total_att('susan')     
+
+    average('','biology', 'all')
+    total_att('biology', 'all')
+    save_student_info()
