@@ -1,0 +1,148 @@
+import logging
+import multiprocessing
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(message)s"
+    )
+
+class You_are_broke_Exception(Exception):
+    pass
+
+def credit_rating(func):
+        def inner(a, b):
+            if b==0:
+                logging.info("Loan unsuccesful. Bad credit rating.")
+                return 
+            return func(a,b)
+        return inner 
+    
+@credit_rating
+def ratio(a, b):
+    return a/b
+
+class Bank:
+    inp=0
+    withd=0
+    saldo=0
+    cl_nr=0
+    eur_dollar=1.07
+    
+    def __init__(self, name):
+        self.b_name=name
+
+    def __str__(self):
+        return f"\nBank: {self.b_name}\nNumber of clients: {self.cl_nr}\n"
+          
+    def all_clients_info(self):
+        file1=open("all_clients.txt", "r+")
+        print(file1.read())
+        print()
+        file1.close()
+    
+    def save_client_info(self):
+        file1=open("all_clients.txt", "a")
+        file1.write(str(self))
+        file1.close()
+        
+    @classmethod
+    def saldo_in_other_currency(cls,client):
+        client.saldo*=cls.eur_dollar
+        client.withd*=cls.eur_dollar
+        client.inp*=cls.eur_dollar
+        print(client)
+          
+
+class Client(Bank):
+    
+    def __init__(self, c_name, bank, sld=0):
+        self.bank=bank
+        self.c_name=c_name
+        self.saldo=sld
+        super().__init__(self.saldo)
+        self.bank.cl_nr+=1
+             
+    def __str__(self):
+        return f"Bank: {self.bank.b_name}\n\nClient: {self.c_name}\nsaldo: {self.saldo:.2f}\ninputs: {self.inp:.2f}\nwithdrowals: {self.withd:.2f}\n\n"
+
+    def r(self):
+        file1=open("client_history_" +str(self.c_name)+".txt", "a")
+        file1.write(str(self))
+        file1.close()
+        
+    def input(self, amount):
+        self.inp+=amount
+        self.saldo+=amount
+        self.r()
+         
+    def withdr(self, amount):
+        try:
+            if amount>self.saldo:
+                raise You_are_broke_Exception
+            else:
+                self.withd+=amount
+                self.saldo-=amount
+                self.r()
+        except You_are_broke_Exception:
+            logging.info("You don't have enough money")
+                 
+    def transfer(self, other, amount):
+        try: 
+            if amount>self.saldo:
+                raise You_are_broke_Exception
+            else:  
+                self.withdr(amount)
+                other.input(amount)
+                self.r()
+        except You_are_broke_Exception:
+            logging.info("Transsfer unsuccesful. You don't have enough money")
+    
+    def loan(self, amount):
+        if ratio(self.inp,self.saldo) and ratio(self.inp,self.saldo)>1:
+            self.saldo+=amount
+            
+        
+          
+if __name__=="__main__":
+
+    file2=open('all_clients.txt', 'w')
+    file2.close()
+    
+    b1=Bank('pko')
+    c1=Client('Mark A',b1)  
+    logging.info(c1) 
+    c2=Client('John B',b1, 100)
+    logging.info(c2)
+    
+    b2=Bank('alior')
+    c3=Client('Anna C', b2,400)
+    logging.info(c3)
+
+    c1.input(100)
+    c3.withdr(6)
+    c1.transfer(c2, 20)
+    c1.transfer(c2, 200)
+    
+    p1=multiprocessing.Process(target=c1.save_client_info)
+    p2=multiprocessing.Process(target=c2.save_client_info)
+    
+    p1.start()
+    p2.start()
+    
+    p1.join()
+    p2.join()
+    
+    logging.info(b1)
+    logging.info(b2)
+    
+    logging.info("\n**********all clients info**********")
+    b1.all_clients_info()
+
+    c1.loan(10)
+    c1.saldo=0
+    logging.info(c1)
+    
+    c1.loan(10)
+    c1.saldo=20
+    
+    c1.saldo_in_other_currency(c1)
